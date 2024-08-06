@@ -44,7 +44,7 @@
             </td>
             <td class="align-middle">
               <div class="d-flex align-items-center">
-                <span th:text="${f.value.firstName} + '&nbsp;' + ${f.value.lastName}"></span>
+                <span th:text="${f.value.firstName()} + '&nbsp;' + ${f.value.lastName}"></span>
               </div>
             </td>
           </tr>

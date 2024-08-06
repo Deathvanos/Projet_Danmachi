@@ -1,12 +1,15 @@
 package com.isep.appli.dbModels;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.isep.appli.models.ChatNotification;
 import com.isep.appli.models.enums.Race;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Getter
 @Setter
@@ -14,7 +17,7 @@ import java.io.Serializable;
 public class Personnage implements Serializable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
@@ -42,10 +45,16 @@ public class Personnage implements Serializable {
     @JsonIgnore
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "familia_id")
     @JsonIgnore
     private Familia familia;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Message> messages;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatNotification> chatNotifications;
 
     @Column(columnDefinition = "text")
     private String description;

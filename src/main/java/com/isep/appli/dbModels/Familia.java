@@ -4,15 +4,17 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
 public class Familia {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
-
+    private String name;
     @Lob
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
@@ -21,8 +23,8 @@ public class Familia {
     @Column(columnDefinition = "MEDIUMBLOB")
     private String embleme_image;
 
-    @Column(nullable = false)
-    private Long leader_id;
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "familia")
+    private List<Personnage> personnages;
 
     @Override
     public String toString() {
@@ -30,7 +32,6 @@ public class Familia {
                 "id=" + id +
                 ", description='" + description + '\'' +
                 //", embleme_image='" + embleme_image + '\'' +
-                ", leader_id=" + leader_id +
                 '}';
     }
 }

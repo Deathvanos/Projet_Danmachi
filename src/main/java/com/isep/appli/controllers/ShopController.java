@@ -26,8 +26,6 @@ public class ShopController {
     private InventoryService inventoryService;
     @Autowired
     private PersonnageService personnageService;
-    @Autowired
-    private DiscussionService discussionService;
 
 
     /*******************************************************************************/
@@ -118,21 +116,6 @@ public class ShopController {
             shop.setQuantity(maxYouCanBuy);
         }
         model.addAttribute("shopCell", shop);
-
-        boolean privateDiscussionCreated;
-        if (discussionService.isprivateDiscusionCreated(personnage.getId(), shop.getSeller().getId())) {
-            privateDiscussionCreated = true;
-            model.addAttribute("privateDiscussionId", discussionService.getDiscussionIdByFirstPersonnageIdAndSecondPersonnageId(personnage.getId(), shop.getSeller().getId()));
-        }
-        else {
-            privateDiscussionCreated = false;
-            Discussion newDiscussion = new Discussion();
-            newDiscussion.setFirstPersonnageId(personnage.getId());
-            newDiscussion.setSecondPersonnageId(shop.getSeller().getId());
-            newDiscussion.setConversationType("PRIVATE");
-            model.addAttribute("newDiscussion", newDiscussion);
-        }
-        model.addAttribute("privateDiscussionCreated", privateDiscussionCreated);
 
         return "shop/buyPanel";
     }

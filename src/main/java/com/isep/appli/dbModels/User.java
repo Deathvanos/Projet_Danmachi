@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import com.isep.appli.models.enums.Status;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +16,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Entity
 public class User implements Serializable {
 	@Id
-	@GeneratedValue(strategy=GenerationType.AUTO)
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long id;
 
 	@Column(nullable = false)
@@ -39,8 +40,9 @@ public class User implements Serializable {
 	@Column(columnDefinition="tinyint(1) default 0")
 	private Boolean isAdmin;
 
-    @Column(columnDefinition="tinyint(1) default 0")
-	private Boolean isLogin;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private Status isLogin;
 
 	@CreationTimestamp
 	@Column(updatable = false)

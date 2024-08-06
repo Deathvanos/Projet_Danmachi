@@ -2,10 +2,12 @@ package com.isep.appli.services;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import com.isep.appli.models.ModifyUserInfoForm;
+import com.isep.appli.models.enums.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -67,7 +69,7 @@ public class UserService {
 		if (user != null && user.getEnabled() == true) {
 			String hashedPassword = user.getPassword();
 			if (passwordEncoder.matches(password, hashedPassword) || password == hashedPassword) {
-				user.setIsLogin(true);
+				user.setIsLogin(Status.ONLINE);
 				user.setLastLoginAt(LocalDateTime.now());
 				userRepository.save(user);
 				return user;
@@ -77,7 +79,7 @@ public class UserService {
 	}
 
 	public void logout(User user) {
-		user.setIsLogin(false);
+		user.setIsLogin(Status.OFFLINE);
 		userRepository.save(user);
 	}
 
@@ -107,13 +109,16 @@ public class UserService {
 	}
 
 	public long getNbUsers() {
-		return this.userRepository.count();
+		return userRepository.count();
 	}
 
-	public long getNbUserLogins() {return this.userRepository.findAllByIsLoginIsTrue().size();}
+	public List<User> findConnectedUser(){return userRepository.findAllByIsLogin(Status.ONLINE);}
+
+	public long getNbUserLogins() { return findConnectedUser().size();}
 
 
 	public void deleteUser(Long id) {this.userRepository.deleteById(id);}
+
 	public void updateUser(Long id, User userNew) {
 		User userOld = userRepository.findById(id).orElse(null);
 		if (!userRepository.existsByUsernameAndIdNot(userNew.getUsername(), id)
@@ -129,5 +134,7 @@ public class UserService {
 	}
 
 
-
+    public List<User> findConnectedUsers() {
+		return userRepository.findAllByIsLogin(Status.ONLINE);
+    }
 }

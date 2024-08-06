@@ -57,8 +57,8 @@ public class ReportService {
     public FormattedReport convertToFormattedReport(Report report) {
         Personnage personnageReported = report.getObjectReportedType().equals("PERSONNAGE") ? personnageService.getPersonnageById(report.getObjectReportedId()) : null;
         Familia familiaReported = report.getObjectReportedType().equals("FAMILIA") ? entityManager.find(Familia.class, report.getObjectReportedId()) : null;
-        Personnage leaderFamiliaReported = report.getObjectReportedType().equals("FAMILIA") ? personnageService.getPersonnageById(familiaReported.getLeader_id()) : null;
-        Personnage senderMessageReported = report.getObjectReportedType().equals("MESSAGE") ? personnageService.getPersonnageById(messageService.getById(report.getObjectReportedId()).getSenderId()) : null;
+        Personnage leaderFamiliaReported = report.getObjectReportedType().equals("FAMILIA") ? familiaService.findLeader(familiaReported) : null;
+        Personnage senderMessageReported = report.getObjectReportedType().equals("MESSAGE") ? messageService.findById(report.getObjectReportedId()).getSender() : null;
 
         return new FormattedReport(
                 report.getId(),
@@ -82,12 +82,12 @@ public class ReportService {
                 break;
             case "FAMILIA":
                 Familia familia = entityManager.find(Familia.class, objectId);
-                Personnage leader = personnageService.getPersonnageById(familia.getLeader_id());
+                Personnage leader = familiaService.findLeader(familia);
                 objectToReport = "la familia de " + leader.getFirstName() + " " + leader.getLastName();
                 break;
             case "MESSAGE":
-                Message message = messageService.getById(objectId);
-                Personnage sender = personnageService.getPersonnageById(message.getSenderId());
+                Message message = messageService.findById(objectId);
+                Personnage sender = message.getSender();
                 objectToReport = "le message de " + sender.getFirstName() + " " + sender.getLastName();
                 break;
             default:

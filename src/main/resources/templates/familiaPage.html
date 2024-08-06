@@ -140,16 +140,8 @@
                 </table>
             </div>
 
-            <div th:if="${familiaDiscussionCreated}">
-                <a th:href="'/chatPage/' + ${familiaDiscussionId}" class="btn btn-outline-success"></i>Accéder à la discussion de la familia</a>
-            </div>
-
-            <div th:if="${!familiaDiscussionCreated}">
-                <form th:action="@{/createDiscussion}" th:object="${newDiscussion}" method="POST">
-                    <input type="hidden" th:field="*{familiaId}" id="familiaId" name="familiaId">
-                    <input type="hidden" th:field="*{conversationType}" id="conversationType" name="conversationType">
-                    <button type="submit" class="btn btn-outline-success"></i>Créer une discussion entre les membres de la familia</button>
-                </form>
+            <div>
+                <a th:href="'/chatPage/' + ${familiaDiscussionId}" class="btn btn-outline-success"></i>Familia Chat</a>
             </div>
 
         </div>

@@ -77,7 +77,7 @@
 
                         <form id="sent-message-form" th:action="@{/sendMessage}" th:object="${message}" method="POST">
                           <div class="form-group">
-                              <input class="form-control"  type="text"  th:field="*{content}" placeholder="Ecrivez un message ..."id="content" name="content">
+                              <input class="form-control" autocomplete="false"  type="text"  th:field="*{content}" placeholder="Ecrivez un message ..."id="content" name="content">
                               <p id="error-empty-message" class="text-danger"></p>
 
                               <input type="hidden" th:field="*{discussion}" id="discussion">

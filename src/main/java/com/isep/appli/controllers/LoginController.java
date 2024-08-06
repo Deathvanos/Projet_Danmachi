@@ -6,6 +6,9 @@ import com.isep.appli.services.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -26,7 +29,7 @@ public class LoginController {
 
     private final UserService userService;
     private final EmailService emailService;
-    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     LoginController(UserService userService, EmailService emailService) {
         this.userService = userService;
@@ -64,15 +67,28 @@ public class LoginController {
         return "login";
     }
 
+    @MessageMapping("/user.connected")
+    @SendTo("/user/topic")
+    public User connectedUser(@Payload User user){
+        return user;
+    }
+
+    @MessageMapping("/user.disconnected")
+    @SendTo("/user/topic")
+    public User disconnect(@Payload User user){
+        userService.logout(user);
+        return user;
+    }
+
     @PostMapping("/login")
-    public String checkLogin(@Valid User user, BindingResult result, Model model, HttpSession session) {
+    public String checkLogin(@Valid @Payload User user, BindingResult result, Model model, HttpSession session) {
         User userSignedIn = userService.login(user.getEmail(), user.getPassword());
 
         if (userSignedIn == null) {
             model.addAttribute("loginError", true);
             return "login";
         }
-
+        connectedUser(userSignedIn);
         session.setAttribute("user", userSignedIn);
         // Définir un délai pour déconnecter l'utilisateur automatiquement.
         scheduler.schedule(() -> userService.logout(user), 30, TimeUnit.MINUTES);
@@ -90,7 +106,7 @@ public class LoginController {
         User user = (User) session.getAttribute("user");
         String checkUser = checkIsUser(user, model);
         if (!checkUser.equals("200")){return checkUser;}
-        userService.logout(user);
+        disconnect(user);
         session.invalidate();
         return "redirect:/home";
     }

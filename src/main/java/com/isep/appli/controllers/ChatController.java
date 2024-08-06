@@ -1,99 +1,58 @@
 package com.isep.appli.controllers;
 
 import com.isep.appli.dbModels.*;
-import com.isep.appli.models.FormattedMessage;
-import com.isep.appli.services.DiscussionService;
+import com.isep.appli.models.ChatNotification;
+import com.isep.appli.services.ChatRoomService;
 import com.isep.appli.services.MessageService;
-import com.isep.appli.services.PersonnageService;
-import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import java.util.Date;
+
 import java.util.List;
-import java.util.Optional;
 
 @Controller
+@RequiredArgsConstructor
 public class ChatController {
-    private final MessageService messageService;
-    private final DiscussionService discussionService;
-    private final PersonnageService personnageService;
 
-    ChatController(MessageService messageService, DiscussionService discussionService, PersonnageService personnageService) {
-        this.messageService = messageService;
-        this.discussionService = discussionService;
-        this.personnageService= personnageService;
+    private final MessageService messageService;
+    private final ChatRoomService chatRoomService;
+    private final SimpMessagingTemplate messagingTemplate;
+
+    @MessageMapping("/chat")
+    public void processMessage(@Payload Message message){
+        Message saveMessage = messageService.save(message);
+        messagingTemplate.convertAndSendToUser(
+                String.valueOf(message.getChatRoom()), "queue/message",
+                ChatNotification.builder()
+                        .id(message.getId())
+                        .sender(message.getSender())
+                        .chatRoom(message.getChatRoom())
+                        .content(message.getContent())
+                        .build()
+        );
     }
 
     @GetMapping("/chatPage")
-    public String chatPageWithoutdiscussionSelected() {
-        return "redirect:/chatPage/0";
+    public String chatPage(Model model){
+        return "chat/chat";
     }
 
-    @GetMapping("/chatPage/{discussionId}")
-    public String chatPage(@PathVariable Long discussionId, Model model, HttpSession session) {
-        if(session.getAttribute("user") == null){
-            return "errors/error-401";
+    @GetMapping("/messages/{senderId}/{recipientId}")
+    public ResponseEntity<List<Message>> findChatMessages( @PathVariable long recipientId) {
+        ChatRoom chatRoom;
+        if ( chatRoomService.findChatRoomById(recipientId).isPresent() ){
+            chatRoom = chatRoomService.findChatRoomById(recipientId).get();
+        } else {
+            chatRoom = new ChatRoom();
         }
-        User user = (User) session.getAttribute("user");
-        model.addAttribute("user", user);
-        Personnage personnage = (Personnage) session.getAttribute("personnage");
-        model.addAttribute("personnage", personnage);
-        if (personnage != null) {
-            model.addAttribute("discussions", discussionService.getformattedDiscussions(personnage));
-
-            Optional<Discussion> discussionOptional = discussionService.getById(discussionId);
-            Discussion discussion = discussionOptional.orElse(null);
-
-            if (discussionId != 0) {
-                model.addAttribute("discussion", discussionService.formatDiscussion(discussion, personnage));
-
-                Long destination;
-                if (discussion.getConversationType().equals("PRIVATE")) {
-                    destination = discussionService.getPrivateDestinationId(discussion, personnage);
-                }
-                else {
-                    destination = discussion.getFamiliaId();
-                }
-
-                List<FormattedMessage> messages = messageService.getFormattedMessagesByDiscussionId(discussionId, personnage);
-                model.addAttribute("messages", messages);
-
-                Message message = new Message();
-                message.setDiscussion(discussionId);
-                message.setSenderId(personnage.getId());
-                message.setDestinationId(destination);
-                model.addAttribute("message", message);
-            }
-        }
-
-        return "chatPage";
+        return ResponseEntity.ok(messageService.findMessagesByChatRoom(chatRoom));
     }
 
-    @PostMapping("sendMessage")
-    public String sendMessage(@Valid Message message, Model model) {
-        message.setDate(new Date());
-        messageService.save(message);
 
-        Long discussionId = message.getDiscussion();
-        return "redirect:/chatPage/" + discussionId;
-    }
-
-    @PostMapping("createDiscussion")
-    public String createDiscussion(@Valid Discussion discussion) {
-        discussionService.save(discussion);
-        return "redirect:/chatPage/" + discussion.getId();
-    }
-
-    @GetMapping("chatPage/delete/{discussionId}")
-    public String deleteDiscussion(@PathVariable Long discussionId, HttpSession session) {
-        if(session.getAttribute("user") == null){
-            return "errors/error-401";
-        }
-        discussionService.deleteDiscussionById(discussionId);
-        return "redirect:/chatPage";
-    }
 }

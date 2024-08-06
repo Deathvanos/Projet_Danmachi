@@ -1,25 +1,25 @@
 package com.isep.appli.services;
 
+import com.isep.appli.dbModels.ChatRoom;
 import com.isep.appli.dbModels.Message;
 import com.isep.appli.dbModels.Personnage;
 import com.isep.appli.models.FormattedMessage;
 import com.isep.appli.repositories.MessageRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class MessageService {
+
     private final MessageRepository messageRepository;
     private final PersonnageService personnageService;
 
-    MessageService(MessageRepository messageRepository, PersonnageService personnageService) {
-        this.messageRepository = messageRepository;
-        this.personnageService = personnageService;
-    }
 
-    public Message getById(Long id) {
+    public Message findById(Long id) {
         return messageRepository.findMessageById(id);
     }
 
@@ -28,7 +28,7 @@ public class MessageService {
     }
 
     public void deleteMessageById(long id) {
-        Message message = getById(id);
+        Message message = findById(id);
         messageRepository.delete(message);
     }
 
@@ -51,21 +51,21 @@ public class MessageService {
         return simpleDateFormat.format(date);
     }
 
-    public List<Message> getMessagesByDiscussion(Long discussion) {
-        return messageRepository.findByDiscussion(discussion);
+    public List<Message> findMessagesByChatRoom(ChatRoom chatRoom) {
+        return messageRepository.findByChatRoom(chatRoom);
     }
 
-    public List<FormattedMessage> getFormattedMessagesByDiscussionId(Long discussion, Personnage personnage) {
-        List<Message> messages = getMessagesByDiscussion(discussion);
+    public List<FormattedMessage> getFormattedMessagesByChatRoom(ChatRoom chatRoom, Personnage personnage) {
+        List<Message> messages = findMessagesByChatRoom(chatRoom);
         Collections.sort(messages, Comparator.comparing(Message::getDate));
         List<FormattedMessage> formattedMessages = new ArrayList();
         for (Message message : messages) {
             FormattedMessage formattedMessage = new FormattedMessage (
                     message.getId(),
                     message.getContent(),
-                    displayDestination(personnageService.getPersonnageById(message.getSenderId())),
+                    displayDestination(message.getSender()),
                     formatDate(message.getDate()),
-                    !message.getSenderId().equals(personnage.getId())
+                    !message.getSender().equals(personnage)
             );
             formattedMessages.add(formattedMessage);
         }

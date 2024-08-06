@@ -44,6 +44,7 @@ public class Item implements Serializable {
 
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Inventory> inventories;
+
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Shop> shops;
 

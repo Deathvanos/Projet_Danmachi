@@ -1,12 +1,14 @@
 package com.isep.appli.controllers;
 
 import com.isep.appli.dbModels.*;
+import com.isep.appli.models.enums.ChatRoomType;
 import com.isep.appli.models.enums.Race;
 import com.isep.appli.services.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +25,7 @@ import static com.isep.appli.controllers.UserController.checkIsUser;
 
 @Controller
 @RequestMapping("familia")
+@RequiredArgsConstructor
 public class FamiliaController {
 
     @PersistenceContext
@@ -32,15 +35,7 @@ public class FamiliaController {
     private final PersonnageService personnageService;
     private final PersonnageController personnageController;
     private final JoinRequestService joinRequestService;
-    private final DiscussionService discussionService;
-    public FamiliaController(ImageService imageService, FamiliaService familiaService, PersonnageService personnageService, PersonnageController personnageController, JoinRequestService joinRequestService, DiscussionService discussionService) {
-        this.imageService = imageService;
-        this.familiaService = familiaService;
-        this.personnageService = personnageService;
-        this.personnageController = personnageController;
-        this.joinRequestService = joinRequestService;
-        this.discussionService = discussionService;
-    }
+    private final ChatRoomService chatRoomService;
 
     // Affiche la page d'une familia spécifique en fonction de son id
     // Si le personnage est le leader, affiche des paramètres en plus sur la page
@@ -54,7 +49,7 @@ public class FamiliaController {
             throw new IllegalArgumentException("Cette familia n'existe pas.");
         }
 
-        Personnage leader = personnageService.getPersonnageById(familia.getLeader_id());
+        Personnage leader = familiaService.findLeader(familia);
         if (leader == null) {
             throw new IllegalArgumentException("Le nom du leader n'est pas correct.");
         }
@@ -96,20 +91,6 @@ public class FamiliaController {
         boolean isLeader = personnage != null && personnage.getId().equals(leader.getId());
         model.addAttribute("isLeader", isLeader);
 
-        boolean familiaDiscussionCreated;
-        if (discussionService.isFamiliaDiscusionCreated(familiaId)) {
-            familiaDiscussionCreated = true;
-            model.addAttribute("familiaDiscussionId", discussionService.getDiscussionIdByFamiliaId(familiaId));
-        }
-        else {
-            familiaDiscussionCreated = false;
-            Discussion newDiscussion = new Discussion();
-            newDiscussion.setFamiliaId(familiaId);
-            newDiscussion.setConversationType("FAMILIA");
-            model.addAttribute("newDiscussion", newDiscussion);
-        }
-        model.addAttribute("familiaDiscussionCreated", familiaDiscussionCreated);
-
         return "familiaPage";
     }
 
@@ -138,11 +119,16 @@ public class FamiliaController {
         if (!checkUser.equals("200")) { return checkUser; }
 
         Personnage personnage = personnageController.getSessionPersonnage(session).getBody();
-        if (personnage != null) {
+        if (personnage != null && personnage.getFamilia() == null && personnage.getRace().equals(Race.GOD)) {
             byte[] decodedImageData = Base64.getDecoder().decode(croppedImageData);
             try {
                 byte[] compressedImageData = imageService.compressImage(new ByteArrayInputStream(decodedImageData));
                 if (familiaService.createFamilia(compressedImageData, personnage, familia)) {
+                    ChatRoom familiaChatRoom = ChatRoom.builder()
+                            .name(personnage.getFirstName() + '_' + personnage.getLastName())
+                            .conversationType(ChatRoomType.GROUP)
+                            .build();
+                    model.addAttribute("newChatRoom", familiaChatRoom);
                     return "redirect:/familia/" + familia.getId();
                 }
             } catch (IOException e) {

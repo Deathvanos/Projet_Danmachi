@@ -7,6 +7,7 @@ import com.isep.appli.models.enums.Race;
 import com.isep.appli.services.*;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -15,7 +16,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -24,6 +24,7 @@ import java.util.stream.IntStream;
 
 
 @Controller
+@AllArgsConstructor
 public class AdminController {
 
     private final UserService userService;
@@ -36,19 +37,6 @@ public class AdminController {
     private final InventoryService inventoryService;
     private final ShopService shopService;
 
-
-
-    public AdminController(UserService userService, PersonnageService personnageService, ReportService reportService, MessageService messageService, FamiliaService familiaService, ItemService itemService, ImageService imageService, InventoryService inventoryService, ShopService shopService) {
-        this.userService = userService;
-        this.personnageService = personnageService;
-        this.reportService = reportService;
-        this.messageService = messageService;
-        this.familiaService = familiaService;
-        this.itemService = itemService;
-        this.imageService = imageService;
-        this.inventoryService = inventoryService;
-        this.shopService = shopService;
-    }
 
     static public String checkIsAdmin(User userAdmin, Model model) {
         if (userAdmin==null) {return "errors/error-401";}
@@ -179,7 +167,7 @@ public class AdminController {
         }
         // remove familia players user
         Familia familia = player.getFamilia();
-        if (familia != null && familia.getLeader_id()==idPlayer) {
+        if (familia != null &&  familiaService.findLeader(familia).getId() == idPlayer) {
             familiaService.deleteFamiliaByIdWithMembers(familia.getId());
         }
         // destroy players user
@@ -372,7 +360,7 @@ public class AdminController {
         if (reportSelected != null) {
             model.addAttribute("reportSelected", reportService.convertToFormattedReport(reportSelected));
             if (reportSelected.getObjectReportedType().equals("MESSAGE")) {
-                model.addAttribute("messageReported", messageService.getById(reportSelected.getObjectReportedId()));
+                model.addAttribute("messageReported", messageService.findById(reportSelected.getObjectReportedId()));
             }
         }
 

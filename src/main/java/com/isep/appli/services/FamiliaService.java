@@ -3,6 +3,7 @@ import com.isep.appli.dbModels.Familia;
 import com.isep.appli.dbModels.JoinRequest;
 import com.isep.appli.dbModels.Personnage;
 
+import com.isep.appli.models.enums.Race;
 import com.isep.appli.repositories.FamiliaRepository;
 import com.isep.appli.repositories.JoinRequestRepository;
 import com.isep.appli.repositories.PersonnageRepository;
@@ -27,6 +28,16 @@ public class FamiliaService {
         this.joinRequestRepository = joinRequestRepository;
     }
 
+    public Personnage findLeader(Familia familia){
+
+        for(Personnage personnage : familia.getPersonnages()){
+            if(personnage.getRace().equals(Race.GOD)){
+                return personnage;
+            }
+        }
+        return null;
+    }
+
     // Récupère toutes les familias
     public Iterable<Familia> getAllFamilias() {
         return familiaRepository.findAll();
@@ -34,7 +45,8 @@ public class FamiliaService {
 
     // Crée une nouvelle familia
     public boolean createFamilia(byte[] compressedImage, Personnage personnage, Familia familia) {
-        familia.setLeader_id(personnage.getId());
+        String fullName = personnage.getFirstName() + ' ' + personnage.getLastName();
+        familia.setName(fullName);
         familia.setEmbleme_image(Base64.getEncoder().encodeToString(compressedImage));
         familiaRepository.save(familia);
 
@@ -48,7 +60,7 @@ public class FamiliaService {
         Iterable<Familia> familias = getAllFamilias();
         Map<Familia, Personnage> familiaWithLeaders = new HashMap<>();
         for (Familia familia : familias) {
-            Personnage leader = personnageRepository.findPersonnageById(familia.getLeader_id());
+            Personnage leader = findLeader(familia);
             familiaWithLeaders.put(familia, leader);
         }
         return familiaWithLeaders;

@@ -1,23 +1,20 @@
-package com.isep.appli.dbModels;
-
-import java.io.Serializable;
-import java.util.Date;
+package com.isep.appli.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.isep.appli.dbModels.ChatRoom;
+import com.isep.appli.dbModels.Personnage;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Getter
 @Setter
-@Entity
 @AllArgsConstructor
 @NoArgsConstructor
+@Entity
 @Builder
-@Table(name = "message")
-public class Message implements Serializable {
-
+public class ChatNotification {
     @Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
@@ -32,8 +29,4 @@ public class Message implements Serializable {
     @JoinColumn(name = "chatroom_id", nullable = false)
     @JsonBackReference
     private ChatRoom chatRoom;
-
-    @Column(nullable = false)
-    private Date date;
-
 }

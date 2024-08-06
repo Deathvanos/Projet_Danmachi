@@ -10,6 +10,9 @@ import com.isep.appli.services.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +38,11 @@ public class UserController {
 		if (user==null) {return "errors/error-401";}
 		model.addAttribute("user", user);
 		return "200";
+	}
+
+	@GetMapping("/users")
+	public ResponseEntity<List<User>> findConnectedUsers() {
+		return ResponseEntity.ok(userService.findConnectedUsers());
 	}
 
 	@GetMapping("/user-profile")
@@ -74,4 +82,7 @@ public class UserController {
 
 		return "redirect:/user-profile";
 	}
+
+
+
 }
